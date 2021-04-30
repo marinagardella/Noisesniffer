@@ -4,6 +4,8 @@ Source code of the article ''Noisesniffer: a Fully Automatic Image Forgery Detec
 # About the forgery-detection method
 Images undergo a complex processing chain from the moment light reaches the camera’s sensor until the final digital image is delivered. Each of these operations leave traces on the noise model which enable forgery detection through noise analysis. In this article we define a background stochastic model which makes it possible to detect local noise anomalies characterized by their number of false alarms. The proposed method is both automatic and blind, allowing quantitative and subjectivity-free detections. Results show that the proposed method outperforms the state of the art.
 
+<p align="center"> <img src="https://user-images.githubusercontent.com/47035045/116679770-39d9aa00-a9ab-11eb-826b-bf73690f08c8.png" width="50%"> </p>
+
 # How to run the code
 
 ## Install the requirements
