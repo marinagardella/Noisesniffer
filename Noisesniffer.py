@@ -11,7 +11,7 @@ import multiprocessing
 from joblib import Parallel, delayed
 from functions import *
 
-def do_one_channel(ch, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_per_bin):
+def do_one_channel(ch, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_per_bin, T_mask):
     all_blocks = np.zeros((int(I.shape[0]/W) +1, int(I.shape[1]/W)+1))
     red_blocks = np.zeros((int(I.shape[0]/W) +1, int(I.shape[1]/W)+1))
     DCTS = DCT_all_blocks(I[:,:,ch], w)
@@ -26,7 +26,7 @@ def do_one_channel(ch, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_
 
     for b in range(num_bins):
         bin_blocks = bin_block_list(b, blocks_list_aux, muestras_por_bin)
-        VL = compute_low_freq_var(DCTS, bin_blocks, get_T_mask(w), I.shape[1], w)
+        VL = compute_low_freq_var(DCTS, bin_blocks, T_mask, I.shape[1], w)
         N = int(samples_per_bin*n)
         sorted_blocks = bin_blocks[np.argsort(VL)] [0:N]
         stds_sorted_blocks = std_blocks(I, w, sorted_blocks,ch)
@@ -55,12 +55,14 @@ def do_one_image(f):
     blocks_list = valid_blocks(I,w)
     num_blocks = len(blocks_list)
     I_means = all_image_means(I,w)
-    num_channels = I.shape[2]        
+    num_channels = I.shape[2]    
+    T_mask = get_T_mask(w)
+
 
     with multiprocessing.Pool(processes=num_channels) as pool:
 
         results = Parallel(n_jobs=num_channels)(delayed(do_one_channel)
-        (i, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_per_bin) 
+        (i, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_per_bin, T_mask) 
         for i in range(num_channels))
         all_blocks = results[0][0] + results[1] [0] + results[2] [0]
         red_blocks = results[0][1] + results[1] [1] + results[2] [1]

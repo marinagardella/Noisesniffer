@@ -68,9 +68,10 @@ def valid_blocks(I,w):
         I_not_saturated*= I_aux
     kernel = np.ones((w,w))
     I_int = conv(I_not_saturated, kernel) 
-    blocks_list = np.zeros((len(np.where(I_int > w**2- .5)[0]),2), dtype = int)
-    blocks_list[:,0] = np.where(I_int > w**2-.5)[0]
-    blocks_list[:,1] = np.where(I_int > w**2- .5)[1]
+    indices = np.where(I_int > w**2- .5)
+    blocks_list = np.zeros((len(indices[0]),2), dtype = int)
+    blocks_list[:,0] = indices[0]
+    blocks_list[:,1] = indices[1]
     return blocks_list
 
 def all_image_means(I,w):
@@ -88,12 +89,8 @@ def means_list(I_means, blocks_list, ch, w):
     '''
     creates a list with the means in I_means in channel ch for the blocks in blocks_list.
     '''
-    num_blocks = len(blocks_list)
-    means = np.zeros(num_blocks) 
-    for block in range(num_blocks):
-        pos_0 = blocks_list[block][0]
-        pos_1 = blocks_list[block][1]
-        means[block]=I_means[pos_0,pos_1,ch]
+    means = [I_means[pos[0], pos[1], ch] for pos in blocks_list]
+    means = np.array(means)
     return np.round(means, decimals = 2)
 
 def get_T(w):
@@ -143,13 +140,10 @@ def compute_low_freq_var(DCTS, blocks, mask, shape, w):
     computes the variance of the DCT coefficients given by mask,
     on each wxw block given by blocks.
     '''
-    num_elems_bin = len(blocks)
-    VL = np.zeros(num_elems_bin) 
-    for pos in range(num_elems_bin):
-        pos_0 = blocks[pos][0]
-        pos_1 = blocks[pos][1]
-        VL[pos] = np.sum((DCTS[pos_0*(shape-w+1)+pos_1]*mask)**2)              
-    return np.array(VL)
+    VL = [np.sum((DCTS[pos[0]*(shape-w+1)+pos[1]]*mask)**2) for pos in blocks]
+    VL = np.array(VL)         
+    return VL
+
 
 
 def bin_block_list(b, blocks_list_aux, muestras_por_bin):
@@ -171,13 +165,8 @@ def std_blocks(I, w, sorted_blocks,ch):
     '''
     computes the std in channel ch of the wxw blocks in the list sorted_blocks.
     '''
-    N = len(sorted_blocks)
-    stds = np.zeros(N)         
-    for position in range(N):
-        pos_x = sorted_blocks[position][0]
-        pos_y = sorted_blocks[position][1]
-        block = I[pos_x:pos_x+w , pos_y:pos_y+w, ch]
-        stds[position]= np.std(block)
+    stds = [np.std(I[pos[0]:pos[0]+w , pos[1]:pos[1]+w, ch]) for pos in sorted_blocks]
+    stds = np.array(stds)
     return stds
 
 def compute_save_NFA(I, w, W, n, m, b, all_blocks, red_blocks, res_directory):
@@ -191,15 +180,11 @@ def compute_save_NFA(I, w, W, n, m, b, all_blocks, red_blocks, res_directory):
     if macro_y*W < I.shape[1]:
         macro_y +=1 
     num_macroblocks = macro_x*macro_y
-    NFA = np.ones((macro_x, macro_y))
     v = w**2
     with open(f"{res_directory}/NFA_w{w}_W{W}_n{n}_m{m}_b{b}.txt", "w") as NFA_file:
         NFA_file.write(f'macroblock_origin_x macroblock_origin_y NFA \n')
-    for i in range(macro_x):
-        for j in range(macro_y):  
-            NFA[i,j] = v*num_macroblocks*(1 - binom.cdf((int(red_blocks[i, j]/v))-1, int(all_blocks[i,j]/v)+ 1, m))
-            with open(f"{res_directory}/NFA_w{w}_W{W}_n{n}_m{m}_b{b}.txt", "a") as NFA_file:
-                NFA_file.write(f'{i*W} {j*W} {NFA[i,j]} \n') 
+    with open(f"{res_directory}/NFA_w{w}_W{W}_n{n}_m{m}_b{b}.txt", "a") as NFA_file:
+        [NFA_file.write(f'{i*W} {j*W} {v*num_macroblocks*(1 - binom.cdf((int(red_blocks[i, j]/v))-1, int(all_blocks[i,j]/v)+ 1, m))} \n') for i in range(macro_x) for j in range(macro_y)]
 #    plt.imshow(NFA, vmin = 0, vmax=1)
 #    plt.title(f'NFA W{W} n{n} m{m} b{b}')
 #    plt.colorbar()
@@ -218,9 +203,3 @@ def do_mask(res_directory, I, thresh):
     for origin in block_origin[np.where(NFA<=thresh)]:
         mask[origin[0]: origin[0]+256,origin[1]: origin[1]+256] = 255
     io.imsave(f'{res_directory}/mask_thresh{thresh}.png', mask.astype(np.uint8), check_contrast=False)
-
-
-
-
-
-
