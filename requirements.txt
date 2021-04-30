@@ -1,0 +1,6 @@
+joblib==1.0.1
+numpy==1.20.2
+opencv-python==4.5.1.48
+pyparsing==2.4.7
+scikit-image==0.18.1
+scipy==1.6.3
