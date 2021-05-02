@@ -22,10 +22,7 @@ def conv(I,kernel):
     '''
     C = cv2.filter2D(I, -1, kernel)
     H = np.floor(np.array(kernel.shape)/2).astype(np.int) 
-    if kernel.shape[0]%2 ==0:
-        C = C[H[0]:-H[0]+1,H[1]:-H[1]+1]
-    else:
-        C = C[H[0]:-H[0],H[1]:-H[1]] 
+    C = C[H[0]:-H[0]+1,H[1]:-H[1]+1] if kernel.shape[0]%2 ==0 else C[H[0]:-H[0],H[1]:-H[1]]
     return C
 
 def read_image(filename):
@@ -45,12 +42,10 @@ def create_res_directory(filename):
     creates the 'results' directory in case it does not exists
     and within it, creates a subdirectory for the given filename.
     '''
-    if not os.path.isdir('results'):         
-        os.mkdir('results')
+    if not os.path.isdir('results'): os.mkdir('results')
     image, _ = os.path.splitext(os.path.basename(filename))
-    res_directory = os.path.join(f'results', image)
-    if not os.path.isdir(res_directory):         
-        os.mkdir(res_directory)
+    res_directory = os.path.join('results', image)
+    if not os.path.isdir(res_directory): os.mkdir(res_directory)
     return res_directory
 
 def valid_blocks(I,w):
@@ -152,12 +147,8 @@ def bin_block_list(b, blocks_list_aux, muestras_por_bin):
     '''
     num_blocks = len(blocks_list_aux)
     num_bins = int(round(num_blocks/muestras_por_bin))
-    if num_bins==0:
-        num_bins=1
-    if b == num_bins-1:
-        bin_block_list = blocks_list_aux[int(num_bins-1)*muestras_por_bin: num_blocks] 
-    else:
-        bin_block_list = blocks_list_aux[b*muestras_por_bin: (b+1)*muestras_por_bin] 
+    if num_bins==0: num_bins=1
+    bin_block_list = blocks_list_aux[int(num_bins-1)*muestras_por_bin: num_blocks] if b == num_bins-1 else blocks_list_aux[b*muestras_por_bin: (b+1)*muestras_por_bin]
     return bin_block_list
 
 
@@ -174,15 +165,13 @@ def compute_save_NFA(I, w, W, n, m, b, all_blocks, red_blocks, res_directory):
     computes the NFA on WxW macroblocks and saves the the result as a txt file.
     '''
     macro_x = int(I.shape[0]/W)
-    if macro_x*W < I.shape[0]:
-        macro_x +=1
+    if macro_x*W < I.shape[0]: macro_x +=1
     macro_y = int(I.shape[1]/W)
-    if macro_y*W < I.shape[1]:
-        macro_y +=1 
+    if macro_y*W < I.shape[1]: macro_y +=1 
     num_macroblocks = macro_x*macro_y
     v = w**2
     with open(f"{res_directory}/NFA_w{w}_W{W}_n{n}_m{m}_b{b}.txt", "w") as NFA_file:
-        NFA_file.write(f'macroblock_origin_x macroblock_origin_y NFA \n')
+        NFA_file.write('macroblock_origin_x macroblock_origin_y NFA \n')
     with open(f"{res_directory}/NFA_w{w}_W{W}_n{n}_m{m}_b{b}.txt", "a") as NFA_file:
         [NFA_file.write(f'{i*W} {j*W} {v*num_macroblocks*(1 - binom.cdf((int(red_blocks[i, j]/v))-1, int(all_blocks[i,j]/v)+ 1, m))} \n') for i in range(macro_x) for j in range(macro_y)]
 #    plt.imshow(NFA, vmin = 0, vmax=1)

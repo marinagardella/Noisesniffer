@@ -18,11 +18,9 @@ def do_one_channel(ch, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_
     means = means_list(I_means, blocks_list, ch, w)
     blocks_list_aux = blocks_list[np.argsort(means)]
     num_bins = int(round(num_blocks/samples_per_bin))
-    if num_bins == 0:
-        num_bins = 1
+    if num_bins == 0: num_bins = 1
     muestras_por_bin = int(num_blocks/num_bins) 
-    if muestras_por_bin == 0:
-        muestras_por_bin = 1
+    if muestras_por_bin == 0: muestras_por_bin = 1
 
     for b in range(num_bins):
         bin_blocks = bin_block_list(b, blocks_list_aux, muestras_por_bin)
@@ -36,8 +34,7 @@ def do_one_channel(ch, n, m, I, W, w, I_means, blocks_list, num_blocks, samples_
 
             for k,pos in enumerate(best_blocks_pos):
                 all_blocks[int(pos[0]/W), int(pos[1]/W)] +=1
-                if k < M:
-                    red_blocks[int(pos[0]/W), int(pos[1]/W)] +=1
+                if k < M: red_blocks[int(pos[0]/W), int(pos[1]/W)] +=1
     return all_blocks, red_blocks
 
 def do_one_image(f):
